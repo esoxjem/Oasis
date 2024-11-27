@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+  "name": "Oasis",
+  "version": "1.0",
+  "description": "A peaceful gathering place for tabs",
+  "permissions": ["tabs", "storage"],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "images/icon-256.png"
+    }
+  }
+}
