@@ -37,14 +37,35 @@ async function displayTabGroups() {
                 <button class="restore-btn" data-group-index="${groupIndex}">Restore All</button>
                 <button class="delete-btn" data-group-index="${groupIndex}">Delete</button>
             </div>
-            ${group.tabs.map(tab => `
-                <a href="${tab.url}" class="tab-link" target="_blank">${tab.title}</a>
+            ${group.tabs.map((tab, tabIndex) => `
+                <a href="${tab.url}" 
+                   class="tab-link" 
+                   data-group-index="${groupIndex}"
+                   data-tab-index="${tabIndex}"
+                   target="_blank">${tab.title}</a>
             `).join('')}
         </div>
     `).join('');
 }
 
 document.getElementById('tabList').addEventListener('click', async (e) => {
+    // Handle individual tab clicks
+    if (e.target.classList.contains('tab-link')) {
+        const groupIndex = parseInt(e.target.dataset.groupIndex);
+        const tabIndex = parseInt(e.target.dataset.tabIndex);
+
+        const storage = await browser.storage.local.get('tabGroups');
+        storage.tabGroups[groupIndex].tabs.splice(tabIndex, 1);
+
+        // Remove group if it's empty
+        if (storage.tabGroups[groupIndex].tabs.length === 0) {
+            storage.tabGroups.splice(groupIndex, 1);
+        }
+
+        await browser.storage.local.set({ tabGroups: storage.tabGroups });
+        await displayTabGroups();
+    }
+
     // Handle restore button clicks
     if (e.target.classList.contains('restore-btn')) {
         const groupIndex = parseInt(e.target.dataset.groupIndex);
@@ -76,7 +97,6 @@ document.getElementById('tabList').addEventListener('click', async (e) => {
         await displayTabGroups();
     }
 });
-
 // Call displayTabGroups when popup loads
 document.addEventListener('DOMContentLoaded', () => {
     displayTabGroups();
