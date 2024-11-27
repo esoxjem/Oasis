@@ -34,8 +34,8 @@ async function displayTabGroups() {
         <div class="tab-group">
             <div class="group-header">
                 ${new Date(group.date).toLocaleString()}
-                <button onclick="restoreGroup(${groupIndex})">Restore All</button>
-                <button onclick="deleteGroup(${groupIndex})">Delete</button>
+                <button class="restore-btn" data-group-index="${groupIndex}">Restore All</button>
+                <button class="delete-btn" data-group-index="${groupIndex}">Delete</button>
             </div>
             ${group.tabs.map(tab => `
                 <a href="${tab.url}" class="tab-link" target="_blank">${tab.title}</a>
@@ -44,21 +44,34 @@ async function displayTabGroups() {
     `).join('');
 }
 
-async function restoreGroup(groupIndex) {
-    const storage = await browser.storage.local.get('tabGroups');
-    const group = storage.tabGroups[groupIndex];
-    
-    group.tabs.forEach(tab => {
-        browser.tabs.create({ url: tab.url });
-    });
-}
+document.getElementById('tabList').addEventListener('click', async (e) => {
+    // Handle restore button clicks
+    if (e.target.classList.contains('restore-btn')) {
+        const groupIndex = parseInt(e.target.dataset.groupIndex);
+        const storage = await browser.storage.local.get('tabGroups');
+        const group = storage.tabGroups[groupIndex];
 
-async function deleteGroup(groupIndex) {
-    const storage = await browser.storage.local.get('tabGroups');
-    storage.tabGroups.splice(groupIndex, 1);
-    await browser.storage.local.set({ tabGroups: storage.tabGroups });
+        group.tabs.forEach(tab => {
+            const a = document.createElement('a');
+            a.href = tab.url;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+    }
+
+    // Handle delete button clicks
+    if (e.target.classList.contains('delete-btn')) {
+        const groupIndex = parseInt(e.target.dataset.groupIndex);
+        const storage = await browser.storage.local.get('tabGroups');
+        storage.tabGroups.splice(groupIndex, 1);
+        await browser.storage.local.set({ tabGroups: storage.tabGroups });
+        await displayTabGroups();
+    }
+});
+
+// Call displayTabGroups when popup loads
+document.addEventListener('DOMContentLoaded', () => {
     displayTabGroups();
-}
-
-// Display saved tabs when popup opens
-displayTabGroups();
+});
