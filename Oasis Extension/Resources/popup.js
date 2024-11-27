@@ -51,6 +51,7 @@ document.getElementById('tabList').addEventListener('click', async (e) => {
         const storage = await browser.storage.local.get('tabGroups');
         const group = storage.tabGroups[groupIndex];
 
+        // Open all tabs in the group
         group.tabs.forEach(tab => {
             const a = document.createElement('a');
             a.href = tab.url;
@@ -59,6 +60,11 @@ document.getElementById('tabList').addEventListener('click', async (e) => {
             a.click();
             document.body.removeChild(a);
         });
+
+        // Remove the group after restoring
+        storage.tabGroups.splice(groupIndex, 1);
+        await browser.storage.local.set({ tabGroups: storage.tabGroups });
+        await displayTabGroups();
     }
 
     // Handle delete button clicks
