@@ -60,15 +60,16 @@ const UIService = {
             </div>
         `;
     },
-
     createHeaderMarkup(group, index) {
         return `
-            <div class="group-header">
-                ${new Date(group.date).toLocaleString()}
-                <button class="restore-btn" data-group-index="${index}">Restore All</button>
-                <button class="delete-btn" data-group-index="${index}">Delete</button>
+        <div class="group-header">
+            <span>📅 ${new Date(group.date).toLocaleString()}</span>
+            <div class="group-actions">
+                <button class="restore-btn" data-group-index="${index}">↗️</button>
+                <button class="delete-btn" data-group-index="${index}">🗑️</button>
             </div>
-        `;
+        </div>
+    `;
     },
 
     createTabsMarkup(group, groupIndex) {
@@ -79,12 +80,15 @@ const UIService = {
 
     createTabMarkup(tab, groupIndex, tabIndex) {
         return `
-            <a href="${tab.url}" 
-               class="tab-link" 
-               data-group-index="${groupIndex}"
-               data-tab-index="${tabIndex}"
-               target="_blank">${tab.title}</a>
-        `;
+        <a href="${tab.url}" 
+           class="tab-link" 
+           data-group-index="${groupIndex}"
+           data-tab-index="${tabIndex}"
+           title="${tab.title}"
+           target="_blank">
+           🔗 ${tab.title}
+        </a>
+    `;
     }
 };
 
