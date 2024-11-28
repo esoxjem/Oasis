@@ -1,103 +1,180 @@
-document.getElementById('saveTabs').addEventListener('click', async () => {
-    const tabs = await browser.tabs.query({ currentWindow: true });
-    const tabGroup = {
-        date: new Date().toISOString(),
-        tabs: tabs.map(tab => ({
+// Storage Service
+const TabStorage = {
+    async get() {
+        const storage = await browser.storage.local.get('tabGroups');
+        return storage.tabGroups || [];
+    },
+
+    async save(tabGroups) {
+        await browser.storage.local.set({ tabGroups });
+    }
+};
+
+// Tab Service
+const TabService = {
+    async getCurrentWindowTabs() {
+        return await browser.tabs.query({ currentWindow: true });
+    },
+
+    async getCurrentTab() {
+        return await browser.tabs.getCurrent();
+    },
+
+    createTabGroupData(tabs) {
+        return {
+            date: new Date().toISOString(),
+            tabs: tabs.map(this.extractTabData)
+        };
+    },
+
+    extractTabData(tab) {
+        return {
             title: tab.title,
             url: tab.url
-        }))
-    };
-    
-    const storage = await browser.storage.local.get('tabGroups');
-    const tabGroups = storage.tabGroups || [];
-    tabGroups.push(tabGroup);
-    
-    await browser.storage.local.set({ tabGroups });
-    
-    // Close all tabs except the current one
-    const currentTab = await browser.tabs.getCurrent();
-    tabs.forEach(tab => {
-        if (tab.id !== currentTab.id) {
-            browser.tabs.remove(tab.id);
-        }
-    });
-    
-    displayTabGroups();
-});
+        };
+    },
 
-async function displayTabGroups() {
-    const storage = await browser.storage.local.get('tabGroups');
-    const tabGroups = storage.tabGroups || [];
-    const tabList = document.getElementById('tabList');
-    
-    tabList.innerHTML = tabGroups.map((group, groupIndex) => `
-        <div class="tab-group">
+    async closeTab(tabId) {
+        await browser.tabs.remove(tabId);
+    }
+};
+
+// UI Service
+const UIService = {
+    renderTabGroups(tabGroups) {
+        const tabList = document.getElementById('tabList');
+        tabList.innerHTML = this.createTabGroupsMarkup(tabGroups);
+    },
+
+    createTabGroupsMarkup(tabGroups) {
+        return tabGroups.map(this.createGroupMarkup).join('');
+    },
+
+    createGroupMarkup(group, index) {
+        return `
+            <div class="tab-group">
+                ${UIService.createHeaderMarkup(group, index)}
+                ${UIService.createTabsMarkup(group, index)}
+            </div>
+        `;
+    },
+
+    createHeaderMarkup(group, index) {
+        return `
             <div class="group-header">
                 ${new Date(group.date).toLocaleString()}
-                <button class="restore-btn" data-group-index="${groupIndex}">Restore All</button>
-                <button class="delete-btn" data-group-index="${groupIndex}">Delete</button>
+                <button class="restore-btn" data-group-index="${index}">Restore All</button>
+                <button class="delete-btn" data-group-index="${index}">Delete</button>
             </div>
-            ${group.tabs.map((tab, tabIndex) => `
-                <a href="${tab.url}" 
-                   class="tab-link" 
-                   data-group-index="${groupIndex}"
-                   data-tab-index="${tabIndex}"
-                   target="_blank">${tab.title}</a>
-            `).join('')}
-        </div>
-    `).join('');
-}
+        `;
+    },
 
-document.getElementById('tabList').addEventListener('click', async (e) => {
-    // Handle individual tab clicks
-    if (e.target.classList.contains('tab-link')) {
-        const groupIndex = parseInt(e.target.dataset.groupIndex);
-        const tabIndex = parseInt(e.target.dataset.tabIndex);
+    createTabsMarkup(group, groupIndex) {
+        return group.tabs
+            .map((tab, tabIndex) => this.createTabMarkup(tab, groupIndex, tabIndex))
+            .join('');
+    },
 
-        const storage = await browser.storage.local.get('tabGroups');
-        storage.tabGroups[groupIndex].tabs.splice(tabIndex, 1);
+    createTabMarkup(tab, groupIndex, tabIndex) {
+        return `
+            <a href="${tab.url}" 
+               class="tab-link" 
+               data-group-index="${groupIndex}"
+               data-tab-index="${tabIndex}"
+               target="_blank">${tab.title}</a>
+        `;
+    }
+};
 
-        // Remove group if it's empty
-        if (storage.tabGroups[groupIndex].tabs.length === 0) {
-            storage.tabGroups.splice(groupIndex, 1);
+// Tab Group Manager
+class TabGroupManager {
+    async saveCurrentTabs() {
+        const tabs = await TabService.getCurrentWindowTabs();
+        const tabGroup = TabService.createTabGroupData(tabs);
+        const tabGroups = await TabStorage.get();
+
+        tabGroups.push(tabGroup);
+        await TabStorage.save(tabGroups);
+        await this.closeOtherTabs();
+        await this.displayGroups();
+    }
+
+    async closeOtherTabs() {
+        const tabs = await TabService.getCurrentWindowTabs();
+        const currentTab = await TabService.getCurrentTab();
+
+        for (const tab of tabs) {
+            if (tab.id !== currentTab.id) {
+                await TabService.closeTab(tab.id);
+            }
+        }
+    }
+
+    async displayGroups() {
+        const tabGroups = await TabStorage.get();
+        UIService.renderTabGroups(tabGroups);
+    }
+
+    async removeTab(groupIndex, tabIndex) {
+        const tabGroups = await TabStorage.get();
+        tabGroups[groupIndex].tabs.splice(tabIndex, 1);
+
+        if (tabGroups[groupIndex].tabs.length === 0) {
+            tabGroups.splice(groupIndex, 1);
         }
 
-        await browser.storage.local.set({ tabGroups: storage.tabGroups });
-        await displayTabGroups();
+        await TabStorage.save(tabGroups);
+        await this.displayGroups();
     }
 
-    // Handle restore button clicks
-    if (e.target.classList.contains('restore-btn')) {
-        const groupIndex = parseInt(e.target.dataset.groupIndex);
-        const storage = await browser.storage.local.get('tabGroups');
-        const group = storage.tabGroups[groupIndex];
+    async restoreGroup(groupIndex) {
+        const tabGroups = await TabStorage.get();
+        const group = tabGroups[groupIndex];
 
-        // Open all tabs in the group
-        group.tabs.forEach(tab => {
-            const a = document.createElement('a');
-            a.href = tab.url;
-            a.target = '_blank';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        });
+        group.tabs.forEach(this.openTab);
+        tabGroups.splice(groupIndex, 1);
 
-        // Remove the group after restoring
-        storage.tabGroups.splice(groupIndex, 1);
-        await browser.storage.local.set({ tabGroups: storage.tabGroups });
-        await displayTabGroups();
+        await TabStorage.save(tabGroups);
+        await this.displayGroups();
     }
 
-    // Handle delete button clicks
-    if (e.target.classList.contains('delete-btn')) {
-        const groupIndex = parseInt(e.target.dataset.groupIndex);
-        const storage = await browser.storage.local.get('tabGroups');
-        storage.tabGroups.splice(groupIndex, 1);
-        await browser.storage.local.set({ tabGroups: storage.tabGroups });
-        await displayTabGroups();
+    openTab(tab) {
+        const link = document.createElement('a');
+        link.href = tab.url;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    async deleteGroup(groupIndex) {
+        const tabGroups = await TabStorage.get();
+        tabGroups.splice(groupIndex, 1);
+        await TabStorage.save(tabGroups);
+        await this.displayGroups();
+    }
+}
+
+// Initialize
+const manager = new TabGroupManager();
+
+// Event Listeners
+document.getElementById('saveTabs').addEventListener('click', () => manager.saveCurrentTabs());
+
+document.getElementById('tabList').addEventListener('click', async (e) => {
+    const target = e.target;
+    const groupIndex = parseInt(target.dataset.groupIndex);
+
+    switch(true) {
+        case target.classList.contains('tab-link'):
+            await manager.removeTab(groupIndex, parseInt(target.dataset.tabIndex));
+            break;
+        case target.classList.contains('restore-btn'):
+            await manager.restoreGroup(groupIndex);
+            break;
+        case target.classList.contains('delete-btn'):
+            await manager.deleteGroup(groupIndex);
+            break;
     }
 });
-// Call displayTabGroups when popup loads
-document.addEventListener('DOMContentLoaded', () => {
-    displayTabGroups();
-});
+document.addEventListener('DOMContentLoaded', () => manager.displayGroups());
