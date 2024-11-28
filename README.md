@@ -1,6 +1,6 @@
 # 🌅 Welcome to Oasis
 <div align="center">
-  <img src="Oasis%20Extension/Resources/Images/icon-512.png" width="128" height="128">
+  <img src="Oasis/Resources/icon.png" width="130" height="137">
 </div>
 A peaceful gathering place for your Safari tabs. Like a serene desert oasis, this extension provides a calm and organized space for all your open tabs.
 
