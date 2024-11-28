@@ -11,3 +11,7 @@ A peaceful gathering place for your Safari tabs. Like a serene desert oasis, thi
 4. Restore tabs anytime with a single click
 
 Bring tranquility to your browsing experience with Oasis ✨
+
+<div align="center">
+  <img src="screenshots/1.png" width="360" alt="Oasis in action">
+</div>
