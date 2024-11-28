@@ -1,8 +1,47 @@
+:root {
+    --oasis-yellow: #FFE5B4;
+    --oasis-peach: #FFB4A2;
+    --oasis-coral: #FF8C7C;
+    --oasis-orange: #FF6B6B;
+}
+
 .container {
     width: 350px;
     padding: 16px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     background: #ffffff;
+}
+
+.tab-group {
+    margin: 16px 0;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.tab-link {
+    transition: background-color 0.2s ease;
+}
+
+.tab-link:nth-child(1):hover {
+    background: var(--oasis-orange);
+}
+
+.tab-link:nth-child(2):hover {
+    background: var(--oasis-coral);
+}
+
+.tab-link:nth-child(3):hover {
+    background: var(--oasis-peach);
+}
+
+.tab-link:nth-child(4):hover,
+.tab-link:nth-child(n+5):hover {
+    background: var(--oasis-yellow);
+}
+
+.tab-link:active {
+    background: linear-gradient(135deg, var(--oasis-peach), var(--oasis-coral));
 }
 
 button {
@@ -21,10 +60,19 @@ button:hover {
     background: #1976D2;
 }
 
+button#saveTabs {
+    background: linear-gradient(135deg, #FF6B6B, #FF8C7C);
+    transition: all 0.3s ease;
+}
+
+button#saveTabs:hover {
+    background: linear-gradient(135deg, #FF8C7C, #FF6B6B);
+}
+
 .tab-group {
     margin: 16px 0;
     padding: 16px;
-    background: #f8f9fa;
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 4px;
 }
 .group-header {
@@ -53,7 +101,7 @@ button:hover {
 
 .group-header button:hover {
     background: none;
-    color: #2196F3;
+    color: var(--oasis-coral);
 }
 
 .tab-link {
@@ -76,5 +124,5 @@ button:hover {
     flex-shrink: 0;
 }
 .tab-link:hover {
-    color: #2196F3;
+    color: #333333;
 }
