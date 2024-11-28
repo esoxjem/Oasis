@@ -50,12 +50,15 @@ button:hover {
     background: none;
     color: #666;
 }
+
 .group-header button:hover {
     background: none;
     color: #2196F3;
 }
+
 .tab-link {
-    display: block;
+    display: flex;
+    align-items: center;
     padding: 8px;
     color: #333;
     text-decoration: none;
@@ -66,6 +69,12 @@ button:hover {
     text-overflow: ellipsis;
 }
 
+.favicon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
 .tab-link:hover {
     color: #2196F3;
 }

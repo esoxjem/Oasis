@@ -79,6 +79,7 @@ const UIService = {
     },
 
     createTabMarkup(tab, groupIndex, tabIndex) {
+        const favicon = `https://www.google.com/s2/favicons?domain=${new URL(tab.url).hostname}`;
         return `
         <a href="${tab.url}" 
            class="tab-link" 
@@ -86,7 +87,8 @@ const UIService = {
            data-tab-index="${tabIndex}"
            title="${tab.title}"
            target="_blank">
-           🔗 ${tab.title}
+           <img src="${favicon}" class="favicon" alt="" />
+           ${tab.title}
         </a>
     `;
     }
