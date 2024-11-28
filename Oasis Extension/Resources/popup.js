@@ -1,12 +1,14 @@
 // Storage Service
 const TabStorage = {
+    STORAGE_KEY: 'com.esoxjem.oasis.tabGroups',
+
     async get() {
-        const storage = await browser.storage.local.get('tabGroups');
-        return storage.tabGroups || [];
+        const storage = await browser.storage.local.get(this.STORAGE_KEY);
+        return storage[this.STORAGE_KEY] || [];
     },
 
     async save(tabGroups) {
-        await browser.storage.local.set({ tabGroups });
+        await browser.storage.local.set({ [this.STORAGE_KEY]: tabGroups });
     }
 };
 
